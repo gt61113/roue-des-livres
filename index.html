@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Roue des Livres Partagée</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { margin-bottom: 30px; }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            justify-content: center;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f1f5f9;
+            margin-bottom: 6px;
+            border-radius: 6px;
+        }
+
+        .btn-delete {
+            background: none;
+            color: #ef4444;
+            padding: 2px 8px;
+        }
+        .btn-delete:hover { background: #fee2e2; }
+
+        /* --- Zone de la Roue --- */
+        .wheel-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .pointer {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #ef4444;
+            position: absolute;
+            top: -10px;
+            z-index: 10;
+        }
+
+        canvas {
+            border-radius: 50%;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
+            transition: transform 4s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        #btn-spin {
+            margin-top: 20px;
+            padding: 14px 28px;
+            font-size: 18px;
+            border-radius: 50px;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+            min-height: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>👥 Notre Roue des Livres Partagée</h1>
+
+    <div class="container">
+        <div class="panel">
+            <h3>Livres suggérés par le groupe</h3>
+            <div class="input-group">
+                <input type="text" id="book-input" placeholder="Ajouter un livre pour tout le monde..." onkeypress="if(event.key === 'Enter') addBook()">
+                <button onclick="addBook()">Ajouter</button>
+            </div>
+            <ul id="book-list"></ul>
+        </div>
+
+        <div class="panel wheel-area">
+            <div class="pointer"></div>
+            <canvas id="wheel-canvas" width="350" height="350"></canvas>
+            <button id="btn-spin" onclick="spinWheel()">Tourner la roue !</button>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <!-- Chargement des scripts de Firebase (Modules ES) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // 🛠️ REMPLACEZ CES LIGNES PAR VOS PROPRES CLÉS CONFIG FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8lbREnL8ghZf-XvLvmYWlSxglLg6gBc0",
+            authDomain: "roue-des-livres.firebaseapp.com",
+            projectId: "roue-des-livres",
+            storageBucket: "roue-des-livres.firebasestorage.app",
+            messagingSenderId: "192909499122",
+            appId: "1:192909499122:web:46587ab5c36c2a4817ce6b",
+            measurementId: "G-57NHH10WMT"
+        };
+        
+
+        // Initialisation de Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const booksCollection = collection(db, "livres");
+
+        let localBooks = []; // Stockage local des livres récupérés en ligne
+        
+        const canvas = document.getElementById('wheel-canvas');
+        const ctx = canvas.getContext('2d');
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        const colors = ["#4f46e5", "#06b6d4", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
+
+        // ÉCOUTE EN TEMPS RÉEL : Se déclenche dès que la base de données change en ligne
+        onSnapshot(booksCollection, (snapshot) => {
+            localBooks = [];
+            snapshot.forEach((doc) => {
+                // On garde l'ID Firebase de chaque livre pour pouvoir le supprimer plus tard
+                localBooks.push({ id: doc.id, title: doc.data().title });
+            });
+            updateListDisplay();
+        });
+
+        function drawWheel() {
+            const numSegments = localBooks.length;
+            const radius = canvas.width / 2;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (numSegments === 0) {
+                ctx.beginPath();
+                ctx.arc(radius, radius, radius - 10, 0, 2 * Math.PI);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fill();
+                ctx.fillStyle = '#64748b';
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Aucun livre. Ajoutez-en un !', radius, radius);
+                return;
+            }
+
+            const anglePerSegment = (2 * Math.PI) / numSegments;
+
+            localBooks.forEach((bookObj, i) => {
+                const startAngle = i * anglePerSegment;
+                const endAngle = startAngle + anglePerSegment;
+
+                ctx.beginPath();
+                ctx.moveTo(radius, radius);
+                ctx.arc(radius, radius, radius - 5, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(radius, radius);
+                ctx.rotate(startAngle + anglePerSegment / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 14px sans-serif";
+                
+                let text = bookObj.title.length > 18 ? bookObj.title.substring(0, 15) + '...' : bookObj.title;
+                ctx.fillText(text, radius - 20, 5);
+                ctx.restore();
+            });
+        }
+
+        function updateListDisplay() {
+            const listElement = document.getElementById('book-list');
+            listElement.innerHTML = '';
+            localBooks.forEach((bookObj) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${bookObj.title}</span>
+                    <button class="btn-delete" data-id="${bookObj.id}">✕</button>
+                `;
+                // Attacher l'événement de suppression
+                li.querySelector('.btn-delete').addEventListener('click', (e) => {
+                    const idDoc = e.target.getAttribute('data-id');
+                    removeBook(idDoc);
+                });
+                listElement.appendChild(li);
+            });
+            drawWheel();
+        }
+
+        // Rendre les fonctions accessibles au clic des boutons HTML classiques
+        window.addBook = async function() {
+            const input = document.getElementById('book-input');
+            const title = input.value.trim();
+            if (title) {
+                input.value = '';
+                // ENVOI EN LIGNE vers Firebase
+                await addDoc(booksCollection, { title: title });
+            }
+        }
+
+        window.removeBook = async function(id) {
+            // SUPPRESSION EN LIGNE sur Firebase
+            await deleteDoc(doc(db, "livres", id));
+        }
+
+        window.spinWheel = function() {
+            if (isSpinning || localBooks.length === 0) return;
+            isSpinning = true;
+            document.getElementById('result').innerText = "Sélection en cours...";
+
+            const extraDegrees = Math.floor(Math.random() * 360);
+            const totalTours = 5 + Math.floor(Math.random() * 5);
+            currentRotation += (totalTours * 360) + extraDegrees;
+
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                
+                const actualDegrees = (currentRotation % 360);
+                const anglePerSegment = 360 / localBooks.length;
+                
+                let winningIndex = Math.floor((270 - actualDegrees + 360) % 360 / anglePerSegment);
+                if (winningIndex < 0) winningIndex += localBooks.length;
+
+                document.getElementById('result').innerText = `📖 Livre du jour : ${localBooks[winningIndex].title}`;
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
