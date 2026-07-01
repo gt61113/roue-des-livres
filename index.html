@@ -3,167 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Roue des Livres Partagée</title>
+    <title>La Roue Magique</title>
+    <!-- Import d'une jolie police magique style conte de fées -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #0f172a;
+            --disney-dark: #0a1128;      /* Bleu nuit château */
+            --disney-blue: #1c2a4a;      /* Fond de carte magique */
+            --disney-gold: #f59e0b;      /* Or poussière d'étoile */
+            --disney-gold-hover: #d97706;/* Or foncé au survol */
+            --text-light: #f8fafc;       /* Texte blanc brillant */
+            --text-muted: #94a3b8;      /* Texte secondaire */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at center, #1e293b 0%, var(--disney-dark) 100%);
+            color: var(--text-light);
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
 
-        h1 { margin-bottom: 30px; }
+        /* Titre style Disney / Contes de fées */
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 26px;
+            text-align: center;
+            color: var(--disney-gold);
+            margin: 15px 0 5px 0;
+            text-shadow: 0px 2px 10px rgba(245, 158, 11, 0.4);
+            letter-spacing: 1px;
+        }
 
-        .container {
+        /* Sélecteur de roues adapté pour mobile */
+        .category-manager {
             display: flex;
-            flex-wrap: wrap;
-            gap: 40px;
-            justify-content: center;
-            max-width: 1000px;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 25px;
+            background: rgba(28, 42, 74, 0.6);
+            padding: 12px 20px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--disney-gold);
+            background: var(--disney-dark);
+            color: var(--text-light);
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* Style des boutons magiques */
+        button {
+            background: linear-gradient(135deg, var(--disney-gold) 0%, #b45309 100%);
+            color: var(--disney-dark);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
             width: 100%;
         }
 
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--disney-gold);
+            border: 1px solid var(--disney-gold);
+            box-shadow: none;
+        }
+
+        /* Structure verticale stricte pour téléphone */
+        .container {
+            display: flex;
+            flex-direction: column; /* Aligné du haut vers le bas */
+            gap: 25px;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
         .panel {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            flex: 1;
-            min-width: 300px;
+            background: var(--disney-blue);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* --- Zone de la Roue en haut --- */
+        .wheel-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            order: 1; /* Force la roue à être au-dessus sur mobile */
+        }
+
+        .pointer {
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 22px solid #ef4444; /* Flèche magique rouge */
+            position: absolute;
+            top: -8px;
+            z-index: 10;
+            filter: drop-shadow(0px 2px 5px rgba(0,0,0,0.5));
+        }
+
+        canvas {
+            border-radius: 50%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+            transition: transform 4s cubic-bezier(0.1, 0.8, 0.2, 1);
+            max-width: 100%; /* S'adapte à l'écran du téléphone */
+            height: auto;
+        }
+
+        #btn-spin {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 1px;
+        }
+
+        #result {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #38bdf8; /* Bleu fée clochette brillant */
+            min-height: 28px;
+            text-align: center;
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+        }
+
+        /* --- Zone de la Liste en dessous --- */
+        .list-area {
+            order: 2; /* Se place sous la roue */
+        }
+
+        .list-area h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--disney-gold);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 5px;
         }
 
         .input-group {
             display: flex;
             gap: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         input {
             flex: 1;
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 15px;
+            background: rgba(10, 17, 40, 0.5);
+            color: var(--text-light);
         }
 
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
+        input:focus {
+            outline: none;
+            border-color: var(--disney-gold);
         }
 
-        button:hover { background-color: var(--primary-hover); }
+        .input-group button {
+            width: auto;
+        }
 
         ul {
             list-style: none;
-            padding: 0;
-            max-height: 300px;
+            max-height: 200px;
             overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Style des barres de défilement pour mobile */
+        ul::-webkit-scrollbar {
+            width: 5px;
+        }
+        ul::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.3);
+            border-radius: 10px;
         }
 
         li {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 12px;
-            background: #f1f5f9;
+            padding: 10px 14px;
+            background: rgba(10, 17, 40, 0.4);
             margin-bottom: 6px;
-            border-radius: 6px;
+            border-radius: 10px;
+            font-size: 14px;
+            border-left: 3px solid var(--disney-gold);
         }
 
         .btn-delete {
             background: none;
-            color: #ef4444;
-            padding: 2px 8px;
+            color: #f43f5e;
+            padding: 4px 8px;
+            width: auto;
+            box-shadow: none;
         }
-        .btn-delete:hover { background: #fee2e2; }
-
-        /* --- Zone de la Roue --- */
-        .wheel-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        .pointer {
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 25px solid #ef4444;
-            position: absolute;
-            top: -10px;
-            z-index: 10;
-        }
-
-        canvas {
-            border-radius: 50%;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
-            transition: transform 4s cubic-bezier(0.1, 0.8, 0.2, 1);
-        }
-
-        #btn-spin {
-            margin-top: 20px;
-            padding: 14px 28px;
-            font-size: 18px;
-            border-radius: 50px;
-        }
-
-        #result {
-            margin-top: 20px;
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--primary);
-            min-height: 30px;
-        }
+        .btn-delete:hover { background: rgba(244, 63, 94, 0.1); }
     </style>
 </head>
 <body>
 
-    <h1>👥 Notre Roue des Livres Partagée</h1>
+    <h1>✨ La Roue Magique</h1>
+    
+    <!-- Menu de sélection de la roue -->
+    <div class="category-manager">
+        <select id="wheel-selector" onchange="changeWheel()"></select>
+        <button class="btn-secondary" onclick="createNewWheel()">+ Créer une roue</button>
+    </div>
 
     <div class="container">
-        <div class="panel">
-            <h3>Livres suggérés par le groupe</h3>
-            <div class="input-group">
-                <input type="text" id="book-input" placeholder="Ajouter un livre pour tout le monde..." onkeypress="if(event.key === 'Enter') addBook()">
-                <button onclick="addBook()">Ajouter</button>
-            </div>
-            <ul id="book-list"></ul>
-        </div>
-
+        <!-- La Roue (grapique) - Prioritaire en haut sur mobile -->
         <div class="panel wheel-area">
             <div class="pointer"></div>
-            <canvas id="wheel-canvas" width="350" height="350"></canvas>
-            <button id="btn-spin" onclick="spinWheel()">Tourner la roue !</button>
+            <canvas id="wheel-canvas" width="320" height="320"></canvas>
+            <button id="btn-spin" onclick="spinWheel()">Lancer le sort !</button>
             <div id="result"></div>
+        </div>
+
+        <!-- La Liste - En dessous -->
+        <div class="panel list-area">
+            <h3 id="list-title">Options de la roue</h3>
+            <div class="input-group">
+                <input type="text" id="item-input" placeholder="Ajouter une option..." onkeypress="if(event.key === 'Enter') addItem()">
+                <button onclick="addItem()">+</button>
+            </div>
+            <ul id="item-list"></ul>
         </div>
     </div>
 
-    <!-- Chargement des scripts de Firebase (Modules ES) -->
+    <!-- Logique Firebase intégrée à partir de tes propres clés -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 🛠️ REMPLACEZ CES LIGNES PAR VOS PROPRES CLÉS CONFIG FIREBASE
+        // Configuration Firebase avec TES clés fournies
         const firebaseConfig = {
             apiKey: "AIzaSyB8lbREnL8ghZf-XvLvmYWlSxglLg6gBc0",
             authDomain: "roue-des-livres.firebaseapp.com",
@@ -173,63 +289,102 @@
             appId: "1:192909499122:web:46587ab5c36c2a4817ce6b",
             measurementId: "G-57NHH10WMT"
         };
-        
 
-        // Initialisation de Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const booksCollection = collection(db, "livres");
+        const globalCollection = collection(db, "roues_dynamiques");
 
-        let localBooks = []; // Stockage local des livres récupérés en ligne
-        
-        const canvas = document.getElementById('wheel-canvas');
-        const ctx = canvas.getContext('2d');
+        let allDataInCloud = [];
+        let activeWheel = "Livres"; 
         let currentRotation = 0;
         let isSpinning = false;
 
-        const colors = ["#4f46e5", "#06b6d4", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
+        const canvas = document.getElementById('wheel-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Palette féerique inspirée de Disney (Bleus magiques, violets célestes, roses et ors)
+        const colors = ["#1e3a8a", "#6d28d9", "#db2777", "#0d9488", "#b45309", "#4338ca", "#0284c7", "#be185d"];
 
-        // ÉCOUTE EN TEMPS RÉEL : Se déclenche dès que la base de données change en ligne
-        onSnapshot(booksCollection, (snapshot) => {
-            localBooks = [];
+        onSnapshot(globalCollection, (snapshot) => {
+            allDataInCloud = [];
             snapshot.forEach((doc) => {
-                // On garde l'ID Firebase de chaque livre pour pouvoir le supprimer plus tard
-                localBooks.push({ id: doc.id, title: doc.data().title });
+                allDataInCloud.push({ id: doc.id, title: doc.data().title, category: doc.data().category });
             });
-            updateListDisplay();
+            updateMenuAndContent();
         });
 
-        function drawWheel() {
-            const numSegments = localBooks.length;
+        function updateMenuAndContent() {
+            let categories = [...new Set(allDataInCloud.map(item => item.category))];
+            
+            if (categories.length === 0) categories = ["Livres"];
+            if (!categories.includes(activeWheel)) activeWheel = categories[0];
+
+            const selector = document.getElementById('wheel-selector');
+            selector.innerHTML = '';
+            
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.innerText = "🔮 Roue : " + cat;
+                if (cat === activeWheel) opt.selected = true;
+                selector.appendChild(opt);
+            });
+
+            document.getElementById('list-title').innerText = `✨ Contenu de la roue : ${activeWheel}`;
+
+            const filteredItems = allDataInCloud.filter(item => item.category === activeWheel);
+            
+            const listElement = document.getElementById('item-list');
+            listElement.innerHTML = '';
+            filteredItems.forEach((item) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${item.title}</span>
+                    <button class="btn-delete" data-id="${item.id}">✕</button>
+                `;
+                li.querySelector('.btn-delete').addEventListener('click', (e) => {
+                    deleteItem(e.target.getAttribute('data-id'));
+                });
+                listElement.appendChild(li);
+            });
+
+            drawWheelGraph(filteredItems);
+        }
+
+        function drawWheelGraph(items) {
+            const numSegments = items.length;
             const radius = canvas.width / 2;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (numSegments === 0) {
                 ctx.beginPath();
                 ctx.arc(radius, radius, radius - 10, 0, 2 * Math.PI);
-                ctx.fillStyle = '#cbd5e1';
+                ctx.fillStyle = '#1c2a4a';
                 ctx.fill();
-                ctx.fillStyle = '#64748b';
-                ctx.font = '16px sans-serif';
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '14px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('Aucun livre. Ajoutez-en un !', radius, radius);
+                ctx.fillText('Ajoutez de la magie ici !', radius, radius);
                 return;
             }
 
             const anglePerSegment = (2 * Math.PI) / numSegments;
 
-            localBooks.forEach((bookObj, i) => {
+            items.forEach((item, i) => {
                 const startAngle = i * anglePerSegment;
                 const endAngle = startAngle + anglePerSegment;
 
                 ctx.beginPath();
                 ctx.moveTo(radius, radius);
-                ctx.arc(radius, radius, radius - 5, startAngle, endAngle);
+                ctx.arc(radius, radius, radius - 4, startAngle, endAngle);
                 ctx.closePath();
                 ctx.fillStyle = colors[i % colors.length];
                 ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 1.5;
                 ctx.stroke();
 
                 ctx.save();
@@ -237,70 +392,72 @@
                 ctx.rotate(startAngle + anglePerSegment / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 14px sans-serif";
+                ctx.font = "bold 13px sans-serif";
                 
-                let text = bookObj.title.length > 18 ? bookObj.title.substring(0, 15) + '...' : bookObj.title;
-                ctx.fillText(text, radius - 20, 5);
+                let text = item.title.length > 15 ? item.title.substring(0, 12) + '...' : item.title;
+                ctx.fillText(text, radius - 25, 4);
                 ctx.restore();
             });
+            
+            // Petit cercle d'or au centre de la roue pour la finition
+            ctx.beginPath();
+            ctx.arc(radius, radius, 12, 0, 2 * Math.PI);
+            ctx.fillStyle = '#f59e0b';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
 
-        function updateListDisplay() {
-            const listElement = document.getElementById('book-list');
-            listElement.innerHTML = '';
-            localBooks.forEach((bookObj) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span>${bookObj.title}</span>
-                    <button class="btn-delete" data-id="${bookObj.id}">✕</button>
-                `;
-                // Attacher l'événement de suppression
-                li.querySelector('.btn-delete').addEventListener('click', (e) => {
-                    const idDoc = e.target.getAttribute('data-id');
-                    removeBook(idDoc);
-                });
-                listElement.appendChild(li);
-            });
-            drawWheel();
+        window.changeWheel = function() {
+            activeWheel = document.getElementById('wheel-selector').value;
+            updateMenuAndContent();
         }
 
-        // Rendre les fonctions accessibles au clic des boutons HTML classiques
-        window.addBook = async function() {
-            const input = document.getElementById('book-input');
-            const title = input.value.trim();
-            if (title) {
-                input.value = '';
-                // ENVOI EN LIGNE vers Firebase
-                await addDoc(booksCollection, { title: title });
+        window.createNewWheel = async function() {
+            const name = prompt("Donnez un nom magique à cette nouvelle roue :");
+            if (name && name.trim() !== "") {
+                const formattedName = name.trim();
+                activeWheel = formattedName;
+                await addDoc(globalCollection, { title: "Exemple ✨", category: formattedName });
             }
         }
 
-        window.removeBook = async function(id) {
-            // SUPPRESSION EN LIGNE sur Firebase
-            await deleteDoc(doc(db, "livres", id));
+        window.addItem = async function() {
+            const input = document.getElementById('item-input');
+            const value = input.value.trim();
+            if (value) {
+                input.value = '';
+                await addDoc(globalCollection, { title: value, category: activeWheel });
+            }
+        }
+
+        window.deleteItem = async function(id) {
+            await deleteDoc(doc(db, "roues_dynamiques", id));
         }
 
         window.spinWheel = function() {
-            if (isSpinning || localBooks.length === 0) return;
+            const filteredItems = allDataInCloud.filter(item => item.category === activeWheel);
+            if (isSpinning || filteredItems.length === 0) return;
+            
             isSpinning = true;
-            document.getElementById('result').innerText = "Sélection en cours...";
+            document.getElementById('result').innerText = "🔮 Incantation en cours...";
 
             const extraDegrees = Math.floor(Math.random() * 360);
-            const totalTours = 5 + Math.floor(Math.random() * 5);
+            const totalTours = 7 + Math.floor(Math.random() * 5); // 7 à 12 tours rapides
             currentRotation += (totalTours * 360) + extraDegrees;
 
             canvas.style.transform = `rotate(${currentRotation}deg)`;
 
             setTimeout(() => {
                 isSpinning = false;
-                
                 const actualDegrees = (currentRotation % 360);
-                const anglePerSegment = 360 / localBooks.length;
+                const anglePerSegment = 360 / filteredItems.length;
                 
                 let winningIndex = Math.floor((270 - actualDegrees + 360) % 360 / anglePerSegment);
-                if (winningIndex < 0) winningIndex += localBooks.length;
+                if (winningIndex < 0) winningIndex += filteredItems.length;
 
-                document.getElementById('result').innerText = `📖 Livre du jour : ${localBooks[winningIndex].title}`;
+                document.getElementById('result').innerText = `✨ Le destin a choisi : ${filteredItems[winningIndex].title}`;
             }, 4000);
         }
     </script>
