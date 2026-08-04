@@ -1,0 +1,20 @@
+{
+  "name": "La Roue Magique",
+  "short_name": "Roue Magique",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a1128",
+  "theme_color": "#0a1128",
+  "icons": [
+    {
+      "src": "https://fav.farm/📚",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://fav.farm/📚",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
