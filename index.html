@@ -4,18 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La Roue Magique</title>
-    <!-- Import d'une jolie police magique style conte de fées -->
+    
+    <!-- Paramètres PWA pour transformer en application mobile -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Roue Magique">
+    <link rel="apple-touch-icon" href="https://fav.farm/📚">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+
+    <!-- Police magique -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --disney-dark: #0a1128;      /* Bleu nuit château */
-            --disney-blue: #1c2a4a;      /* Fond de carte magique */
-            --disney-gold: #f59e0b;      /* Or poussière d'étoile */
-            --disney-gold-hover: #d97706;/* Or foncé au survol */
-            --text-light: #f8fafc;       /* Texte blanc brillant */
-            --text-muted: #94a3b8;      /* Texte secondaire */
+            --disney-dark: #0a1128;      
+            --disney-blue: #1c2a4a;      
+            --disney-gold: #f59e0b;      
+            --disney-gold-hover: #d97706;
+            --text-light: #f8fafc;       
+            --text-muted: #94a3b8;      
         }
 
         * {
@@ -35,7 +42,6 @@
             min-height: 100vh;
         }
 
-        /* Titre style Disney / Contes de fées */
         h1 {
             font-family: 'Cinzel', serif;
             font-size: 26px;
@@ -46,7 +52,6 @@
             letter-spacing: 1px;
         }
 
-        /* Sélecteur de roues adapté pour mobile */
         .category-manager {
             display: flex;
             flex-direction: column;
@@ -75,7 +80,6 @@
             text-align: center;
         }
 
-        /* Style des boutons magiques */
         button {
             background: linear-gradient(135deg, var(--disney-gold) 0%, #b45309 100%);
             color: var(--disney-dark);
@@ -102,7 +106,6 @@
             box-shadow: none;
         }
 
-        /* Structure verticale stricte pour téléphone */
         .container {
             display: flex;
             flex-direction: column;
@@ -121,7 +124,6 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* --- Zone de la Roue en haut --- */
         .wheel-area {
             display: flex;
             flex-direction: column;
@@ -168,7 +170,6 @@
             text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
         }
 
-        /* --- Zone de la Liste en dessous --- */
         .list-area {
             order: 2;
         }
@@ -240,21 +241,63 @@
             width: auto;
             box-shadow: none;
         }
-        .btn-delete:hover { background: rgba(244, 63, 94, 0.1); }
+
+        /* Style de l'accordéon d'aide PWA */
+        .pwa-install-guide {
+            order: 3;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        details {
+            background: rgba(28, 42, 74, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        summary {
+            font-weight: bold;
+            color: var(--disney-gold);
+            cursor: pointer;
+            outline: none;
+            list-style: none;
+            text-align: center;
+        }
+        summary::-webkit-details-marker { display: none; }
+
+        .guide-content {
+            margin-top: 12px;
+            line-height: 1.5;
+            color: var(--text-light);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 10px;
+        }
+
+        .guide-step {
+            margin-bottom: 8px;
+        }
+
+        /* Masquer le guide automatiquement si l'application est déjà installée et ouverte en mode standalone */
+        @media display-mode: standalone {
+            .pwa-install-guide {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
 
     <h1>✨ La Roue Magique</h1>
     
-    <!-- Menu de sélection de la roue -->
     <div class="category-manager">
         <select id="wheel-selector" onchange="changeWheel()"></select>
         <button class="btn-secondary" onclick="createNewWheel()">+ Créer une roue</button>
     </div>
 
     <div class="container">
-        <!-- La Roue (graphique) -->
+        <!-- La Roue -->
         <div class="panel wheel-area">
             <div class="pointer"></div>
             <canvas id="wheel-canvas" width="320" height="320"></canvas>
@@ -271,9 +314,25 @@
             </div>
             <ul id="item-list"></ul>
         </div>
+
+        <!-- Accordéon d'aide à l'installation mobile -->
+        <div class="pwa-install-guide" id="pwa-guide">
+            <details>
+                <summary>📲 Comment l'installer sur ton téléphone ?</summary>
+                <div class="guide-content">
+                    <div class="guide-step">
+                        <strong>🍏 Sur iPhone (Safari) :</strong><br>
+                        Appuie sur le bouton <strong>Partager ⎋</strong> en bas, puis défile vers le bas et choisis <strong>Sur l'écran d'accueil ➕</strong>.
+                    </div>
+                    <div class="guide-step" style="margin-top: 10px;">
+                        <strong>🤖 Sur Android (Chrome) :</strong><br>
+                        Appuie sur les <strong>3 petits points ⁝</strong> en haut à droite, puis choisis <strong>Installer l'application 📲</strong>.
+                    </div>
+                </div>
+            </details>
+        </div>
     </div>
 
-    <!-- Logique Firebase et Moteur Sonore -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -295,58 +354,47 @@
         let allDataInCloud = [];
         let activeWheel = "Livres"; 
         let isSpinning = false;
-        let currentAngle = 0; // Angle actuel en radians
+        let currentAngle = 0;
 
         const canvas = document.getElementById('wheel-canvas');
         const ctx = canvas.getContext('2d');
         const colors = ["#1e3a8a", "#6d28d9", "#db2777", "#0d9488", "#b45309", "#4338ca", "#0284c7", "#be185d"];
 
-        // --- MOTEUR SONORE (Web Audio API) ---
+        // Moteur Sonore
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Son du "clic" lors de la rotation
         function playClickSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(600, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
-            
             gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
-            
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            
             osc.start();
             osc.stop(audioCtx.currentTime + 0.04);
         }
 
-        // Jingle magique au résultat
         function playWinSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const notes = [523.25, 659.25, 783.99, 1046.50]; // Do, Mi, Sol, Do (Aigu)
+            const notes = [523.25, 659.25, 783.99, 1046.50];
             notes.forEach((freq, index) => {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.1);
-                
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime + index * 0.1);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.1 + 0.3);
-                
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.start(audioCtx.currentTime + index * 0.1);
                 osc.stop(audioCtx.currentTime + index * 0.1 + 0.3);
             });
         }
 
-        // --- GESTION DE FIREBASE ---
         onSnapshot(globalCollection, (snapshot) => {
             allDataInCloud = [];
             snapshot.forEach((doc) => {
@@ -393,7 +441,6 @@
             drawWheelGraph(filteredItems, currentAngle);
         }
 
-        // --- DESSIN DU CANVAS (Avec support de l'angle de rotation dynamique) ---
         function drawWheelGraph(items, angle = 0) {
             const numSegments = items.length;
             const radius = canvas.width / 2;
@@ -449,7 +496,6 @@
 
             ctx.restore();
             
-            // Centre d'or fixe
             ctx.beginPath();
             ctx.arc(radius, radius, 12, 0, 2 * Math.PI);
             ctx.fillStyle = '#f59e0b';
@@ -459,7 +505,6 @@
             ctx.stroke();
         }
 
-        // --- ANIMATION ET SONS EN TEMPS RÉEL ---
         window.spinWheel = function() {
             const filteredItems = allDataInCloud.filter(item => item.category === activeWheel);
             if (isSpinning || filteredItems.length === 0) return;
@@ -470,20 +515,18 @@
             const numSegments = filteredItems.length;
             const anglePerSegment = (2 * Math.PI) / numSegments;
 
-            let velocity = Math.random() * 0.2 + 0.35; // Vitesse initiale
-            const friction = 0.988; // Décélération progressive
+            let velocity = Math.random() * 0.2 + 0.35;
+            const friction = 0.988;
             let lastSegmentIndex = -1;
 
             function animate() {
                 velocity *= friction;
                 currentAngle += velocity;
 
-                // Calcul du segment actuellement sous la flèche du haut (angle 3PI/2 soit 270 deg)
                 const normalizedAngle = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
                 const pointerAngle = (3 * Math.PI / 2 - normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
                 const currentSegmentIndex = Math.floor(pointerAngle / anglePerSegment);
 
-                // Déclencher le son de clic quand on change de segment
                 if (currentSegmentIndex !== lastSegmentIndex && velocity > 0.002) {
                     playClickSound();
                     lastSegmentIndex = currentSegmentIndex;
@@ -495,7 +538,7 @@
                     requestAnimationFrame(animate);
                 } else {
                     isSpinning = false;
-                    playWinSound(); // Jouer la fanfare magique
+                    playWinSound();
                     const winningItem = filteredItems[currentSegmentIndex];
                     document.getElementById('result').innerText = `✨ Le destin a choisi : ${winningItem.title}`;
                 }
@@ -531,6 +574,12 @@
 
         window.deleteItem = async function(id) {
             await deleteDoc(doc(db, "roues_dynamiques", id));
+        }
+
+        // Masquer le guide d'installation si l'application est ouverte directement sur iOS/Android
+        if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+            const guide = document.getElementById('pwa-guide');
+            if (guide) guide.style.display = 'none';
         }
     </script>
 </body>
