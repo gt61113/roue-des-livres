@@ -104,7 +104,7 @@
         /* Structure verticale stricte pour téléphone */
         .container {
             display: flex;
-            flex-direction: column; /* Aligné du haut vers le bas */
+            flex-direction: column;
             gap: 25px;
             align-items: center;
             width: 100%;
@@ -126,7 +126,7 @@
             flex-direction: column;
             align-items: center;
             position: relative;
-            order: 1; /* Force la roue à être au-dessus sur mobile */
+            order: 1;
         }
 
         .pointer {
@@ -134,7 +134,7 @@
             height: 0;
             border-left: 14px solid transparent;
             border-right: 14px solid transparent;
-            border-top: 22px solid #ef4444; /* Flèche magique rouge */
+            border-top: 22px solid #ef4444;
             position: absolute;
             top: -8px;
             z-index: 10;
@@ -144,8 +144,7 @@
         canvas {
             border-radius: 50%;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
-            transition: transform 4s cubic-bezier(0.1, 0.8, 0.2, 1);
-            max-width: 100%; /* S'adapte à l'écran du téléphone */
+            max-width: 100%;
             height: auto;
         }
 
@@ -162,7 +161,7 @@
             margin-top: 15px;
             font-size: 18px;
             font-weight: bold;
-            color: #38bdf8; /* Bleu fée clochette brillant */
+            color: #38bdf8;
             min-height: 28px;
             text-align: center;
             text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
@@ -170,7 +169,7 @@
 
         /* --- Zone de la Liste en dessous --- */
         .list-area {
-            order: 2; /* Se place sous la roue */
+            order: 2;
         }
 
         .list-area h3 {
@@ -213,7 +212,6 @@
             padding-right: 5px;
         }
 
-        /* Style des barres de défilement pour mobile */
         ul::-webkit-scrollbar {
             width: 5px;
         }
@@ -255,7 +253,7 @@
     </div>
 
     <div class="container">
-        <!-- La Roue (grapique) - Prioritaire en haut sur mobile -->
+        <!-- La Roue (graphique) -->
         <div class="panel wheel-area">
             <div class="pointer"></div>
             <canvas id="wheel-canvas" width="320" height="320"></canvas>
@@ -263,7 +261,7 @@
             <div id="result"></div>
         </div>
 
-        <!-- La Liste - En dessous -->
+        <!-- La Liste -->
         <div class="panel list-area">
             <h3 id="list-title">Options de la roue</h3>
             <div class="input-group">
@@ -274,12 +272,11 @@
         </div>
     </div>
 
-    <!-- Logique Firebase intégrée à partir de tes propres clés -->
+    <!-- Logique Firebase et Moteur Sonore -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Configuration Firebase avec TES clés fournies
         const firebaseConfig = {
             apiKey: "AIzaSyB8lbREnL8ghZf-XvLvmYWlSxglLg6gBc0",
             authDomain: "roue-des-livres.firebaseapp.com",
@@ -296,15 +293,59 @@
 
         let allDataInCloud = [];
         let activeWheel = "Livres"; 
-        let currentRotation = 0;
         let isSpinning = false;
+        let currentAngle = 0; // Angle actuel en radians
 
         const canvas = document.getElementById('wheel-canvas');
         const ctx = canvas.getContext('2d');
-        
-        // Palette féerique inspirée de Disney (Bleus magiques, violets célestes, roses et ors)
         const colors = ["#1e3a8a", "#6d28d9", "#db2777", "#0d9488", "#b45309", "#4338ca", "#0284c7", "#be185d"];
 
+        // --- MOTEUR SONORE (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Son du "clic" lors de la rotation
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
+            
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        }
+
+        // Jingle magique au résultat
+        function playWinSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // Do, Mi, Sol, Do (Aigu)
+            notes.forEach((freq, index) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.1);
+                
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime + index * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.1 + 0.3);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(audioCtx.currentTime + index * 0.1);
+                osc.stop(audioCtx.currentTime + index * 0.1 + 0.3);
+            });
+        }
+
+        // --- GESTION DE FIREBASE ---
         onSnapshot(globalCollection, (snapshot) => {
             allDataInCloud = [];
             snapshot.forEach((doc) => {
@@ -348,10 +389,11 @@
                 listElement.appendChild(li);
             });
 
-            drawWheelGraph(filteredItems);
+            drawWheelGraph(filteredItems, currentAngle);
         }
 
-        function drawWheelGraph(items) {
+        // --- DESSIN DU CANVAS (Avec support de l'angle de rotation dynamique) ---
+        function drawWheelGraph(items, angle = 0) {
             const numSegments = items.length;
             const radius = canvas.width / 2;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -372,6 +414,11 @@
             }
 
             const anglePerSegment = (2 * Math.PI) / numSegments;
+
+            ctx.save();
+            ctx.translate(radius, radius);
+            ctx.rotate(angle);
+            ctx.translate(-radius, -radius);
 
             items.forEach((item, i) => {
                 const startAngle = i * anglePerSegment;
@@ -398,8 +445,10 @@
                 ctx.fillText(text, radius - 25, 4);
                 ctx.restore();
             });
+
+            ctx.restore();
             
-            // Petit cercle d'or au centre de la roue pour la finition
+            // Centre d'or fixe
             ctx.beginPath();
             ctx.arc(radius, radius, 12, 0, 2 * Math.PI);
             ctx.fillStyle = '#f59e0b';
@@ -409,8 +458,54 @@
             ctx.stroke();
         }
 
+        // --- ANIMATION ET SONS EN TEMPS RÉEL ---
+        window.spinWheel = function() {
+            const filteredItems = allDataInCloud.filter(item => item.category === activeWheel);
+            if (isSpinning || filteredItems.length === 0) return;
+            
+            isSpinning = true;
+            document.getElementById('result').innerText = "🔮 Incantation en cours...";
+
+            const numSegments = filteredItems.length;
+            const anglePerSegment = (2 * Math.PI) / numSegments;
+
+            let velocity = Math.random() * 0.2 + 0.35; // Vitesse initiale
+            const friction = 0.988; // Décélération progressive
+            let lastSegmentIndex = -1;
+
+            function animate() {
+                velocity *= friction;
+                currentAngle += velocity;
+
+                // Calcul du segment actuellement sous la flèche du haut (angle 3PI/2 soit 270 deg)
+                const normalizedAngle = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+                const pointerAngle = (3 * Math.PI / 2 - normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
+                const currentSegmentIndex = Math.floor(pointerAngle / anglePerSegment);
+
+                // Déclencher le son de clic quand on change de segment
+                if (currentSegmentIndex !== lastSegmentIndex && velocity > 0.002) {
+                    playClickSound();
+                    lastSegmentIndex = currentSegmentIndex;
+                }
+
+                drawWheelGraph(filteredItems, currentAngle);
+
+                if (velocity > 0.0015) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    playWinSound(); // Jouer la fanfare magique
+                    const winningItem = filteredItems[currentSegmentIndex];
+                    document.getElementById('result').innerText = `✨ Le destin a choisi : ${winningItem.title}`;
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
         window.changeWheel = function() {
             activeWheel = document.getElementById('wheel-selector').value;
+            currentAngle = 0;
             updateMenuAndContent();
         }
 
@@ -419,6 +514,7 @@
             if (name && name.trim() !== "") {
                 const formattedName = name.trim();
                 activeWheel = formattedName;
+                currentAngle = 0;
                 await addDoc(globalCollection, { title: "Exemple ✨", category: formattedName });
             }
         }
@@ -434,31 +530,6 @@
 
         window.deleteItem = async function(id) {
             await deleteDoc(doc(db, "roues_dynamiques", id));
-        }
-
-        window.spinWheel = function() {
-            const filteredItems = allDataInCloud.filter(item => item.category === activeWheel);
-            if (isSpinning || filteredItems.length === 0) return;
-            
-            isSpinning = true;
-            document.getElementById('result').innerText = "🔮 Incantation en cours...";
-
-            const extraDegrees = Math.floor(Math.random() * 360);
-            const totalTours = 7 + Math.floor(Math.random() * 5); // 7 à 12 tours rapides
-            currentRotation += (totalTours * 360) + extraDegrees;
-
-            canvas.style.transform = `rotate(${currentRotation}deg)`;
-
-            setTimeout(() => {
-                isSpinning = false;
-                const actualDegrees = (currentRotation % 360);
-                const anglePerSegment = 360 / filteredItems.length;
-                
-                let winningIndex = Math.floor((270 - actualDegrees + 360) % 360 / anglePerSegment);
-                if (winningIndex < 0) winningIndex += filteredItems.length;
-
-                document.getElementById('result').innerText = `✨ Le destin a choisi : ${filteredItems[winningIndex].title}`;
-            }, 4000);
         }
     </script>
 </body>
