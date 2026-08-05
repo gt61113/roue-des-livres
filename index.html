@@ -70,6 +70,12 @@
             backdrop-filter: blur(5px);
         }
 
+        .category-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
         select {
             width: 100%;
             padding: 12px;
@@ -107,6 +113,18 @@
             color: var(--disney-gold);
             border: 1px solid var(--disney-gold);
             box-shadow: none;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #f43f5e;
+            border: 1px solid #f43f5e;
+            box-shadow: none;
+        }
+
+        .btn-danger:hover {
+            background: rgba(244, 63, 94, 0.1);
+            box-shadow: 0 4px 10px rgba(244, 63, 94, 0.2);
         }
 
         .container {
@@ -296,7 +314,10 @@
     
     <div class="category-manager">
         <select id="wheel-selector" onchange="changeWheel()"></select>
-        <button class="btn-secondary" onclick="createNewWheel()">+ Créer une roue</button>
+        <div class="category-actions">
+            <button class="btn-secondary" onclick="createNewWheel()">+ Créer</button>
+            <button class="btn-danger" onclick="deleteCurrentWheel()">🗑️ Supprimer</button>
+        </div>
     </div>
 
     <div class="container">
@@ -338,7 +359,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB8lbREnL8ghZf-XvLvmYWlSxglLg6gBc0",
@@ -349,6 +370,19 @@
             appId: "1:192909499122:web:46587ab5c36c2a4817ce6b",
             measurementId: "G-57NHH10WMT"
         };
+
+        // Mot de passe pour la modification (à modifier selon vos souhaits)
+        const ADMIN_PASSWORD = "1234";
+
+        function checkAuth() {
+            const pwd = prompt("🔒 Entrez le mot de passe pour effectuer cette action :");
+            if (pwd === ADMIN_PASSWORD) {
+                return true;
+            } else {
+                if (pwd !== null) alert("Mot de passe incorrect ❌");
+                return false;
+            }
+        }
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -466,6 +500,17 @@
 
             const anglePerSegment = (2 * Math.PI) / numSegments;
 
+            // Calcul dynamique de la taille du texte
+            let fontSize = 13;
+            let maxCharLength = 15;
+            if (numSegments > 12) {
+                fontSize = 10;
+                maxCharLength = 10;
+            } else if (numSegments > 8) {
+                fontSize = 11;
+                maxCharLength = 12;
+            }
+
             ctx.save();
             ctx.translate(radius, radius);
             ctx.rotate(angle);
@@ -490,10 +535,10 @@
                 ctx.rotate(startAngle + anglePerSegment / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 13px sans-serif";
+                ctx.font = `bold ${fontSize}px sans-serif`;
                 
-                let text = item.title.length > 15 ? item.title.substring(0, 12) + '...' : item.title;
-                ctx.fillText(text, radius - 25, 4);
+                let text = item.title.length > maxCharLength ? item.title.substring(0, maxCharLength - 3) + '...' : item.title;
+                ctx.fillText(text, radius - 20, fontSize / 3);
                 ctx.restore();
             });
 
@@ -557,6 +602,7 @@
         }
 
         window.createNewWheel = async function() {
+            if (!checkAuth()) return;
             const name = prompt("Donnez un nom magique à cette nouvelle roue :");
             if (name && name.trim() !== "") {
                 const formattedName = name.trim();
@@ -566,16 +612,34 @@
             }
         }
 
+        window.deleteCurrentWheel = async function() {
+            if (!checkAuth()) return;
+            const itemsToDelete = allDataInCloud.filter(item => item.category === activeWheel);
+            if (itemsToDelete.length === 0) return;
+
+            const confirmDelete = confirm(`Es-tu sûr de vouloir supprimer définitivement la roue "${activeWheel}" et tout son contenu ?`);
+            if (confirmDelete) {
+                const batch = writeBatch(db);
+                itemsToDelete.forEach(item => {
+                    const docRef = doc(db, "roues_dynamiques", item.id);
+                    batch.delete(docRef);
+                });
+                await batch.commit();
+            }
+        }
+
         window.addItem = async function() {
             const input = document.getElementById('item-input');
             const value = input.value.trim();
             if (value) {
+                if (!checkAuth()) return;
                 input.value = '';
                 await addDoc(globalCollection, { title: value, category: activeWheel });
             }
         }
 
         window.deleteItem = async function(id) {
+            if (!checkAuth()) return;
             await deleteDoc(doc(db, "roues_dynamiques", id));
         }
 
