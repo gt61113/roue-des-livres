@@ -45,14 +45,33 @@
             min-height: 100vh;
         }
 
+        .header-container {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0 15px 0;
+        }
+
         h1 {
             font-family: 'Cinzel', serif;
-            font-size: 26px;
-            text-align: center;
+            font-size: 24px;
             color: var(--disney-gold);
-            margin: 15px 0 5px 0;
             text-shadow: 0px 2px 10px rgba(245, 158, 11, 0.4);
             letter-spacing: 1px;
+        }
+
+        .btn-admin-toggle {
+            background: rgba(28, 42, 74, 0.8);
+            border: 1px solid var(--disney-gold);
+            color: var(--disney-gold);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            width: auto;
+            box-shadow: none;
         }
 
         .category-manager {
@@ -263,6 +282,15 @@
             box-shadow: none;
         }
 
+        /* Classes d'affichage dynamique pour le mode admin */
+        .admin-only {
+            display: none !important;
+        }
+
+        body.admin-mode .admin-only {
+            display: flex !important;
+        }
+
         /* Style de l'accordéon d'aide PWA */
         .pwa-install-guide {
             order: 3;
@@ -300,7 +328,6 @@
             margin-bottom: 8px;
         }
 
-        /* Masquer le guide automatiquement si l'application est déjà installée et ouverte en mode standalone */
         @media display-mode: standalone {
             .pwa-install-guide {
                 display: none !important;
@@ -310,11 +337,14 @@
 </head>
 <body>
 
-    <h1>✨ La Roue Magique</h1>
+    <div class="header-container">
+        <h1>✨ La Roue Magique</h1>
+        <button id="btn-admin-auth" class="btn-admin-toggle" onclick="toggleAdminMode()">🔒 Connexion</button>
+    </div>
     
     <div class="category-manager">
         <select id="wheel-selector" onchange="changeWheel()"></select>
-        <div class="category-actions">
+        <div class="category-actions admin-only">
             <button class="btn-secondary" onclick="createNewWheel()">+ Créer</button>
             <button class="btn-danger" onclick="deleteCurrentWheel()">🗑️ Supprimer</button>
         </div>
@@ -332,7 +362,7 @@
         <!-- La Liste -->
         <div class="panel list-area">
             <h3 id="list-title">Options de la roue</h3>
-            <div class="input-group">
+            <div class="input-group admin-only">
                 <input type="text" id="item-input" placeholder="Ajouter une option..." onkeypress="if(event.key === 'Enter') addItem()">
                 <button onclick="addItem()">+</button>
             </div>
@@ -371,16 +401,36 @@
             measurementId: "G-57NHH10WMT"
         };
 
-        // Mot de passe pour la modification (à modifier selon vos souhaits)
         const ADMIN_PASSWORD = "1234";
+        let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
 
-        function checkAuth() {
-            const pwd = prompt("🔒 Entrez le mot de passe pour effectuer cette action :");
-            if (pwd === ADMIN_PASSWORD) {
-                return true;
+        function updateAdminUI() {
+            const btn = document.getElementById('btn-admin-auth');
+            if (isAdmin) {
+                document.body.classList.add('admin-mode');
+                btn.innerText = "🔓 Déconnexion";
             } else {
-                if (pwd !== null) alert("Mot de passe incorrect ❌");
-                return false;
+                document.body.classList.remove('admin-mode');
+                btn.innerText = "🔒 Connexion";
+            }
+        }
+
+        window.toggleAdminMode = function() {
+            if (isAdmin) {
+                isAdmin = false;
+                sessionStorage.setItem('isAdmin', 'false');
+                updateAdminUI();
+                updateMenuAndContent();
+            } else {
+                const pwd = prompt("🔑 Entrez le mot de passe Admin :");
+                if (pwd === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    sessionStorage.setItem('isAdmin', 'true');
+                    updateAdminUI();
+                    updateMenuAndContent();
+                } else if (pwd !== null) {
+                    alert("Mot de passe incorrect ❌");
+                }
             }
         }
 
@@ -465,13 +515,16 @@
             listElement.innerHTML = '';
             filteredItems.forEach((item) => {
                 const li = document.createElement('li');
+                const deleteBtnHtml = isAdmin ? `<button class="btn-delete" data-id="${item.id}">✕</button>` : '';
                 li.innerHTML = `
                     <span>${item.title}</span>
-                    <button class="btn-delete" data-id="${item.id}">✕</button>
+                    ${deleteBtnHtml}
                 `;
-                li.querySelector('.btn-delete').addEventListener('click', (e) => {
-                    deleteItem(e.target.getAttribute('data-id'));
-                });
+                if (isAdmin) {
+                    li.querySelector('.btn-delete').addEventListener('click', (e) => {
+                        deleteItem(e.target.getAttribute('data-id'));
+                    });
+                }
                 listElement.appendChild(li);
             });
 
@@ -500,7 +553,6 @@
 
             const anglePerSegment = (2 * Math.PI) / numSegments;
 
-            // Calcul dynamique de la taille du texte
             let fontSize = 13;
             let maxCharLength = 15;
             if (numSegments > 12) {
@@ -602,7 +654,7 @@
         }
 
         window.createNewWheel = async function() {
-            if (!checkAuth()) return;
+            if (!isAdmin) return;
             const name = prompt("Donnez un nom magique à cette nouvelle roue :");
             if (name && name.trim() !== "") {
                 const formattedName = name.trim();
@@ -613,7 +665,7 @@
         }
 
         window.deleteCurrentWheel = async function() {
-            if (!checkAuth()) return;
+            if (!isAdmin) return;
             const itemsToDelete = allDataInCloud.filter(item => item.category === activeWheel);
             if (itemsToDelete.length === 0) return;
 
@@ -629,21 +681,23 @@
         }
 
         window.addItem = async function() {
+            if (!isAdmin) return;
             const input = document.getElementById('item-input');
             const value = input.value.trim();
             if (value) {
-                if (!checkAuth()) return;
                 input.value = '';
                 await addDoc(globalCollection, { title: value, category: activeWheel });
             }
         }
 
         window.deleteItem = async function(id) {
-            if (!checkAuth()) return;
+            if (!isAdmin) return;
             await deleteDoc(doc(db, "roues_dynamiques", id));
         }
 
-        // Masquer le guide d'installation si l'application est ouverte directement sur iOS/Android
+        // Initialisation de l'affichage Admin au chargement
+        updateAdminUI();
+
         if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
             const guide = document.getElementById('pwa-guide');
             if (guide) guide.style.display = 'none';
