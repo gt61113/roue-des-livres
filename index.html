@@ -1,588 +1,1009 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Roue Magique</title>
+    <title>La Roue des Livres - Administration & Tirage</title>
     
-    <!-- Paramètres PWA pour transformer en application mobile -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Roue Magique">
-    <link rel="apple-touch-icon" href="https://fav.farm/📚">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
-
-    <!-- Lien vers le fichier manifest pour Android (supprime le logo Chrome) -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Police magique -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --disney-dark: #0a1128;      
-            --disney-blue: #1c2a4a;      
-            --disney-gold: #f59e0b;      
-            --disney-gold-hover: #d97706;
-            --text-light: #f8fafc;       
-            --text-muted: #94a3b8;      
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: radial-gradient(circle at center, #1e293b 0%, var(--disney-dark) 100%);
-            color: var(--text-light);
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        h1 {
-            font-family: 'Cinzel', serif;
-            font-size: 26px;
-            text-align: center;
-            color: var(--disney-gold);
-            margin: 15px 0 5px 0;
-            text-shadow: 0px 2px 10px rgba(245, 158, 11, 0.4);
-            letter-spacing: 1px;
-        }
-
-        .category-manager {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 25px;
-            background: rgba(28, 42, 74, 0.6);
-            padding: 12px 20px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            backdrop-filter: blur(5px);
-        }
-
-        select {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--disney-gold);
-            background: var(--disney-dark);
-            color: var(--text-light);
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        button {
-            background: linear-gradient(135deg, var(--disney-gold) 0%, #b45309 100%);
-            color: var(--disney-dark);
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
-            width: 100%;
-        }
-
-        button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(245, 158, 11, 0.4);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--disney-gold);
-            border: 1px solid var(--disney-gold);
-            box-shadow: none;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            align-items: center;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .panel {
-            background: var(--disney-blue);
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .wheel-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            order: 1;
-        }
-
-        .pointer {
-            width: 0;
-            height: 0;
-            border-left: 14px solid transparent;
-            border-right: 14px solid transparent;
-            border-top: 22px solid #ef4444;
-            position: absolute;
-            top: -8px;
-            z-index: 10;
-            filter: drop-shadow(0px 2px 5px rgba(0,0,0,0.5));
-        }
-
-        canvas {
-            border-radius: 50%;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
-            max-width: 100%;
-            height: auto;
-        }
-
-        #btn-spin {
-            margin-top: 20px;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 30px;
-            font-family: 'Cinzel', serif;
-            letter-spacing: 1px;
-        }
-
-        #result {
-            margin-top: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #38bdf8;
-            min-height: 28px;
-            text-align: center;
-            text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
-        }
-
-        .list-area {
-            order: 2;
-        }
-
-        .list-area h3 {
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: var(--disney-gold);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 5px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            font-size: 15px;
-            background: rgba(10, 17, 40, 0.5);
-            color: var(--text-light);
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--disney-gold);
-        }
-
-        .input-group button {
-            width: auto;
-        }
-
-        ul {
-            list-style: none;
-            max-height: 200px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        ul::-webkit-scrollbar {
-            width: 5px;
-        }
-        ul::-webkit-scrollbar-thumb {
-            background: rgba(245, 158, 11, 0.3);
-            border-radius: 10px;
-        }
-
-        li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            background: rgba(10, 17, 40, 0.4);
-            margin-bottom: 6px;
-            border-radius: 10px;
-            font-size: 14px;
-            border-left: 3px solid var(--disney-gold);
-        }
-
-        .btn-delete {
-            background: none;
-            color: #f43f5e;
-            padding: 4px 8px;
-            width: auto;
-            box-shadow: none;
-        }
-
-        /* Style de l'accordéon d'aide PWA */
-        .pwa-install-guide {
-            order: 3;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        details {
-            background: rgba(28, 42, 74, 0.6);
-            border-radius: 12px;
-            border: 1px solid rgba(245, 158, 11, 0.4);
-            padding: 12px;
-            font-size: 13px;
-        }
-
-        summary {
-            font-weight: bold;
-            color: var(--disney-gold);
-            cursor: pointer;
-            outline: none;
-            list-style: none;
-            text-align: center;
-        }
-        summary::-webkit-details-marker { display: none; }
-
-        .guide-content {
-            margin-top: 12px;
-            line-height: 1.5;
-            color: var(--text-light);
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 10px;
-        }
-
-        .guide-step {
-            margin-bottom: 8px;
-        }
-
-        /* Masquer le guide automatiquement si l'application est déjà installée et ouverte en mode standalone */
-        @media display-mode: standalone {
-            .pwa-install-guide {
-                display: none !important;
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
             }
+        }
+    </script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Firebase App & Database (v8 for seamless inline setup) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.8);
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.02); }
+        }
+        .spin-glow {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-    <h1>✨ La Roue Magique</h1>
-    
-    <div class="category-manager">
-        <select id="wheel-selector" onchange="changeWheel()"></select>
-        <button class="btn-secondary" onclick="createNewWheel()">+ Créer une roue</button>
-    </div>
-
-    <div class="container">
-        <!-- La Roue -->
-        <div class="panel wheel-area">
-            <div class="pointer"></div>
-            <canvas id="wheel-canvas" width="320" height="320"></canvas>
-            <button id="btn-spin" onclick="spinWheel()">Lancer le sort !</button>
-            <div id="result"></div>
-        </div>
-
-        <!-- La Liste -->
-        <div class="panel list-area">
-            <h3 id="list-title">Options de la roue</h3>
-            <div class="input-group">
-                <input type="text" id="item-input" placeholder="Ajouter une option..." onkeypress="if(event.key === 'Enter') addItem()">
-                <button onclick="addItem()">+</button>
+    <!-- Header Navbar -->
+    <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-book-open text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg text-slate-100 leading-tight">La Roue des Livres</h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Tirage au sort littéraire & Gestion de roues</p>
+                </div>
             </div>
-            <ul id="item-list"></ul>
+
+            <!-- Header Status Badges & Admin Switch -->
+            <div class="flex items-center space-x-3">
+                <!-- Firebase Status Badge -->
+                <div id="firebaseBadge" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+                    <span id="firebaseDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                    <span id="firebaseStatusText" class="hidden sm:inline">Connexion...</span>
+                </div>
+
+                <!-- Admin Mode Toggle Button -->
+                <button id="authBtn" onclick="toggleAdminLogin()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-indigo-400"></i>
+                    <span id="authBtnText">Mode Admin</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+        
+        <!-- Wheel Selector Bar -->
+        <div class="w-full flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 shadow-xl">
+            <div class="flex items-center space-x-3 w-full sm:w-auto">
+                <i class="fa-solid fa-dharmachakra text-indigo-400 text-xl ml-2 hidden sm:inline"></i>
+                <label for="wheelSelect" class="sr-only">Sélectionner une roue</label>
+                <select id="wheelSelect" onchange="changeWheel(this.value)" class="bg-slate-950 text-slate-100 font-semibold text-sm rounded-xl px-4 py-2.5 border border-slate-700 focus:outline-none focus:border-indigo-500 w-full sm:w-72 cursor-pointer shadow-inner">
+                    <!-- Options dynamiques insérées par JS -->
+                </select>
+            </div>
+
+            <!-- Admin Actions (visibles en mode Admin) -->
+            <div id="adminActions" class="admin-only hidden flex items-center space-x-2 w-full sm:w-auto justify-end flex-wrap gap-2">
+                <button onclick="openAIWheelModal()" class="px-3.5 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 text-xs font-semibold transition flex items-center gap-2" title="Générer une roue avec IA / Modèles">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Générateur IA
+                </button>
+                <button onclick="openChangePasswordModal()" class="px-3.5 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 text-xs font-semibold transition flex items-center gap-2" title="Changer le mot de passe admin">
+                    <i class="fa-solid fa-key"></i> Mot de passe
+                </button>
+                <button onclick="openNewWheelModal()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition flex items-center gap-2" title="Créer une nouvelle roue">
+                    <i class="fa-solid fa-plus"></i> Nouvelle Roue
+                </button>
+                <button onclick="deleteCurrentWheel()" class="px-3 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition flex items-center gap-2" title="Supprimer la roue actuelle">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
         </div>
 
-        <!-- Accordéon d'aide à l'installation mobile -->
-        <div class="pwa-install-guide" id="pwa-guide">
-            <details>
-                <summary>📲 Comment l'installer sur ton téléphone ?</summary>
-                <div class="guide-content">
-                    <div class="guide-step">
-                        <strong>🍏 Sur iPhone (Safari) :</strong><br>
-                        Appuie sur le bouton <strong>Partager ⎋</strong> en bas, puis défile vers le bas et choisis <strong>Sur l'écran d'accueil ➕</strong>.
+        <!-- Interactive Section: Wheel & Book List Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left Panel: Interactive Canvas Wheel -->
+            <div class="lg:col-span-7 bg-slate-900/60 rounded-3xl p-6 border border-slate-800 shadow-2xl flex flex-col items-center relative overflow-hidden">
+                
+                <!-- Winner Banner Display -->
+                <div id="winnerBanner" class="w-full mb-4 p-4 rounded-2xl bg-gradient-to-r from-indigo-900/60 via-purple-900/60 to-slate-900/60 border border-indigo-500/40 text-center transition-all duration-300 hidden">
+                    <span class="text-xs uppercase tracking-widest text-indigo-300 font-bold block mb-1">🎉 Livre Sélectionné !</span>
+                    <h2 id="winnerText" class="text-xl sm:text-2xl font-extrabold text-white"></h2>
+                    <p id="winnerAuthor" class="text-xs sm:text-sm text-indigo-200 mt-0.5"></p>
+                </div>
+
+                <!-- Wheel Canvas Container -->
+                <div class="relative w-full max-w-[420px] aspect-square flex items-center justify-center my-2">
+                    <!-- Pointer Indicator -->
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 text-amber-400 drop-shadow-[0_4px_10px_rgba(245,158,11,0.6)]">
+                        <i class="fa-solid fa-caret-down text-4xl sm:text-5xl"></i>
                     </div>
-                    <div class="guide-step" style="margin-top: 10px;">
-                        <strong>🤖 Sur Android (Chrome) :</strong><br>
-                        Appuie sur les <strong>3 petits points ⁝</strong> en haut à droite, puis choisis <strong>Installer l'application 📲</strong>.
+                    
+                    <!-- Canvas Element -->
+                    <canvas id="wheelCanvas" width="800" height="800" class="w-full h-full rounded-full transition-transform duration-75"></canvas>
+                </div>
+
+                <!-- Spin Controls & Options -->
+                <div class="mt-6 w-full flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button id="spinBtn" onclick="spinWheel()" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-extrabold text-base shadow-xl shadow-indigo-600/30 transition transform active:scale-95 flex items-center justify-center gap-3 spin-glow">
+                        <i class="fa-solid fa-play text-lg"></i>
+                        <span>Lancer la Roue !</span>
+                    </button>
+                    
+                    <!-- Options Toggle -->
+                    <div class="flex items-center gap-4 bg-slate-950/60 px-4 py-2.5 rounded-xl border border-slate-800/80 text-xs text-slate-300">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="removeOnWinToggle" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                            <span>Retirer le gagnant</span>
+                        </label>
                     </div>
                 </div>
-            </details>
+            </div>
+
+            <!-- Right Panel: Books List & Management -->
+            <div class="lg:col-span-5 bg-slate-900/60 rounded-3xl p-6 border border-slate-800 shadow-2xl flex flex-col h-[600px]">
+                
+                <!-- List Header -->
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                    <div>
+                        <h2 class="font-bold text-lg text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-list-ul text-indigo-400"></i> Livres de la roue
+                        </h2>
+                        <p class="text-xs text-slate-400" id="bookCountText">0 livres inscrits</p>
+                    </div>
+                    
+                    <button onclick="openAddBookModal()" class="admin-only hidden px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Ajouter
+                    </button>
+                </div>
+
+                <!-- Book Items Scrollable Container -->
+                <div id="booksList" class="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar">
+                    <!-- Contenu généré dynamiquement par JS -->
+                </div>
+
+                <!-- Admin Quick Add Bar Footer -->
+                <div class="admin-only hidden mt-4 pt-3 border-t border-slate-800">
+                    <form onsubmit="handleQuickAddBook(event)" class="flex gap-2">
+                        <input type="text" id="quickTitle" placeholder="Titre du livre..." required class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="quickAuthor" placeholder="Auteur..." class="w-1/3 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                        <button type="submit" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal 1: Admin Password / Auth Login -->
+    <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto text-indigo-400 text-xl">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="font-bold text-lg text-slate-100">Accès Administration</h3>
+                <p class="text-xs text-slate-400">Entrez le mot de passe pour modifier les roues</p>
+            </div>
+            
+            <form onsubmit="handleAdminLogin(event)" class="space-y-3">
+                <input type="password" id="adminPasswordInput" placeholder="Mot de passe..." required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeAuthModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">Annuler</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition">Valider</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <!-- Modal 2: New Wheel -->
+    <div id="newWheelModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-base text-slate-100"><i class="fa-solid fa-plus-circle text-indigo-400"></i> Nouvelle Roue</h3>
+                <button onclick="closeNewWheelModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleCreateWheel(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Nom de la roue</label>
+                    <input type="text" id="newWheelTitle" placeholder="Ex: Club de lecture Octobre" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeNewWheelModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">Annuler</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyB8lbREnL8ghZf-XvLvmYWlSxglLg6gBc0",
-            authDomain: "roue-des-livres.firebaseapp.com",
-            projectId: "roue-des-livres",
-            storageBucket: "roue-des-livres.firebasestorage.app",
-            messagingSenderId: "192909499122",
-            appId: "1:192909499122:web:46587ab5c36c2a4817ce6b",
-            measurementId: "G-57NHH10WMT"
+    <!-- Modal 3: AI Wheel Generator & Presets -->
+    <div id="aiWheelModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-violet-400"></i> Générateur de Roue Thématique
+                </h3>
+                <button onclick="closeAIWheelModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-slate-400">Choisissez une thématique pré-configurée pour générer instantanément une roue complète :</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <button onclick="generatePresetWheel('Fantasy & Imaginaire', presetFantasy)" class="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-2xl text-left transition space-y-1">
+                    <span class="text-xs font-bold text-violet-400 block">🐉 Fantasy & Epique</span>
+                    <span class="text-[11px] text-slate-400 block">Tolkien, Hobb, Sanderson...</span>
+                </button>
+                <button onclick="generatePresetWheel('Polars & Thrillers', presetPolar)" class="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-2xl text-left transition space-y-1">
+                    <span class="text-xs font-bold text-amber-400 block">🔍 Polars & Sci-Fi</span>
+                    <span class="text-[11px] text-slate-400 block">Thilliez, Grangé, Asimov...</span>
+                </button>
+                <button onclick="generatePresetWheel('Classiques Littéraires', presetClassiques)" class="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-2xl text-left transition space-y-1">
+                    <span class="text-xs font-bold text-emerald-400 block">📚 Les Incontournables</span>
+                    <span class="text-[11px] text-slate-400 block">Hugo, Camus, Austen...</span>
+                </button>
+                <button onclick="generatePresetWheel('Développement Personnel', presetDevPerso)" class="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-2xl text-left transition space-y-1">
+                    <span class="text-xs font-bold text-sky-400 block">🌱 Mindset & Essais</span>
+                    <span class="text-[11px] text-slate-400 block">Clear, Clear, Sinek...</span>
+                </button>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="closeAIWheelModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Add / Edit Book -->
+    <div id="bookModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 id="bookModalTitle" class="font-bold text-base text-slate-100">Ajouter un livre</h3>
+                <button onclick="closeBookModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleSaveBook(event)" class="space-y-4">
+                <input type="hidden" id="editBookId">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Titre du livre *</label>
+                    <input type="text" id="bookTitle" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Auteur</label>
+                    <input type="text" id="bookAuthor" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Couleur sur la roue</label>
+                    <div class="flex gap-2 items-center">
+                        <input type="color" id="bookColor" value="#6366f1" class="w-10 h-10 rounded-xl border-0 cursor-pointer bg-transparent">
+                        <span class="text-xs text-slate-400">Sélectionnez une couleur pour ce segment</span>
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeBookModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">Annuler</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 5: Change Password -->
+    <div id="changePasswordModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-base text-slate-100">Mot de Passe Admin</h3>
+                <button onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleChangePassword(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Nouveau mot de passe</label>
+                    <input type="password" id="newAdminPasswordInput" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeChangePasswordModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">Annuler</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        let firebaseApp = null;
+        let firebaseDb = null;
+        let isAdmin = false;
+        let adminPassword = "admin"; // Mot de passe par défaut
+
+        let wheels = [];
+        let activeWheelId = "wheel_default";
+        
+        // Canvas Wheel Physics state
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        const PALETTE = [
+            '#4f46e5', '#7c3aed', '#2563eb', '#0284c7', 
+            '#0d9488', '#059669', '#d97706', '#dc2626'
+        ];
+
+        // Presets pour la création IA
+        const presetFantasy = [
+            { title: "Le Seigneur des Anneaux", author: "J.R.R. Tolkien", color: "#4f46e5" },
+            { title: "L'Assassin Royal", author: "Robin Hobb", color: "#7c3aed" },
+            { title: "Fils-des-Brumes", author: "Brandon Sanderson", color: "#2563eb" },
+            { title: "Le Nom du Vent", author: "Patrick Rothfuss", color: "#0284c7" },
+            { title: "La Roue du Temps", author: "Robert Jordan", color: "#0d9488" }
+        ];
+
+        const presetPolar = [
+            { title: "Le Chuchoteur", author: "Donato Carrisi", color: "#dc2626" },
+            { title: "Nymphéas Noirs", author: "Michel Bussi", color: "#d97706" },
+            { title: "La Fille du Train", author: "Paula Hawkins", color: "#059669" },
+            { title: "Dune", author: "Frank Herbert", color: "#0284c7" },
+            { title: "Fondation", author: "Isaac Asimov", color: "#4f46e5" }
+        ];
+
+        const presetClassiques = [
+            { title: "Les Misérables", author: "Victor Hugo", color: "#4f46e5" },
+            { title: "L'Étranger", author: "Albert Camus", color: "#7c3aed" },
+            { title: "Orgueil et Préjugés", author: "Jane Austen", color: "#059669" },
+            { title: "Le Comte de Monte-Cristo", author: "Alexandre Dumas", color: "#d97706" }
+        ];
+
+        const presetDevPerso = [
+            { title: "Atomic Habits", author: "James Clear", color: "#0284c7" },
+            { title: "Sapiens", author: "Yuval Noah Harari", color: "#0d9488" },
+            { title: "Start With Why", author: "Simon Sinek", color: "#7c3aed" }
+        ];
+
+        window.onload = function() {
+            loadLocalState();
+            initFirebase();
+            renderWheelSelect();
+            renderBooksList();
+            drawWheel();
+            updateAdminUI();
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const globalCollection = collection(db, "roues_dynamiques");
+        function initFirebase() {
+            const defaultConfig = {
+                databaseURL: "https://la-roue-des-livres-default-rtdb.firebaseio.com"
+            };
 
-        let allDataInCloud = [];
-        let activeWheel = "Livres"; 
-        let isSpinning = false;
-        let currentAngle = 0;
+            try {
+                if (!firebase.apps.length) {
+                    firebaseApp = firebase.initializeApp(defaultConfig);
+                } else {
+                    firebaseApp = firebase.app();
+                }
 
-        const canvas = document.getElementById('wheel-canvas');
-        const ctx = canvas.getContext('2d');
-        const colors = ["#1e3a8a", "#6d28d9", "#db2777", "#0d9488", "#b45309", "#4338ca", "#0284c7", "#be185d"];
+                firebaseDb = firebase.database();
 
-        // Moteur Sonore
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        function playClickSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.04);
-        }
-
-        function playWinSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const notes = [523.25, 659.25, 783.99, 1046.50];
-            notes.forEach((freq, index) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime + index * 0.1);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.1 + 0.3);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + index * 0.1);
-                osc.stop(audioCtx.currentTime + index * 0.1 + 0.3);
-            });
-        }
-
-        onSnapshot(globalCollection, (snapshot) => {
-            allDataInCloud = [];
-            snapshot.forEach((doc) => {
-                allDataInCloud.push({ id: doc.id, title: doc.data().title, category: doc.data().category });
-            });
-            updateMenuAndContent();
-        });
-
-        function updateMenuAndContent() {
-            let categories = [...new Set(allDataInCloud.map(item => item.category))];
-            
-            if (categories.length === 0) categories = ["Livres"];
-            if (!categories.includes(activeWheel)) activeWheel = categories[0];
-
-            const selector = document.getElementById('wheel-selector');
-            selector.innerHTML = '';
-            
-            categories.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat;
-                opt.innerText = "🔮 Roue : " + cat;
-                if (cat === activeWheel) opt.selected = true;
-                selector.appendChild(opt);
-            });
-
-            document.getElementById('list-title').innerText = `✨ Contenu de la roue : ${activeWheel}`;
-
-            const filteredItems = allDataInCloud.filter(item => item.category === activeWheel);
-            
-            const listElement = document.getElementById('item-list');
-            listElement.innerHTML = '';
-            filteredItems.forEach((item) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span>${item.title}</span>
-                    <button class="btn-delete" data-id="${item.id}">✕</button>
-                `;
-                li.querySelector('.btn-delete').addEventListener('click', (e) => {
-                    deleteItem(e.target.getAttribute('data-id'));
+                firebaseDb.ref('roue_livres').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        if (data.wheels && Array.isArray(data.wheels)) {
+                            wheels = data.wheels;
+                        }
+                        if (data.adminPassword) {
+                            adminPassword = data.adminPassword;
+                        }
+                        if (!wheels.some(w => w.id === activeWheelId) && wheels.length > 0) {
+                            activeWheelId = wheels[0].id;
+                        }
+                        saveStateToLocalStorage();
+                        renderWheelSelect();
+                        renderBooksList();
+                        drawWheel();
+                        updateFirebaseBadge(true, "Firebase : Connecté");
+                    } else {
+                        if (isAdmin) saveStateToFirebase();
+                        updateFirebaseBadge(true, "Firebase : Initialisé");
+                    }
+                }, (error) => {
+                    updateFirebaseBadge(false, "Firebase : Mode local");
                 });
-                listElement.appendChild(li);
-            });
 
-            drawWheelGraph(filteredItems, currentAngle);
+            } catch (err) {
+                updateFirebaseBadge(false, "Firebase : Mode local");
+            }
         }
 
-        function drawWheelGraph(items, angle = 0) {
-            const numSegments = items.length;
-            const radius = canvas.width / 2;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function updateFirebaseBadge(connected, text) {
+            const badge = document.getElementById('firebaseBadge');
+            const dot = document.getElementById('firebaseDot');
+            const statusText = document.getElementById('firebaseStatusText');
 
-            if (numSegments === 0) {
+            statusText.innerText = text;
+            if (connected) {
+                badge.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+            } else {
+                badge.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700";
+                dot.className = "w-2 h-2 rounded-full bg-slate-500";
+            }
+        }
+
+        function loadLocalState() {
+            const saved = localStorage.getItem('roue_livres_data');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    wheels = parsed.wheels || [];
+                    adminPassword = parsed.adminPassword || "admin";
+                    activeWheelId = parsed.activeWheelId || (wheels[0] ? wheels[0].id : "wheel_default");
+                } catch(e) {}
+            }
+
+            if (!wheels || wheels.length === 0) {
+                wheels = [
+                    {
+                        id: "wheel_default",
+                        title: "Ma Première Roue",
+                        books: [
+                            { id: "b1", title: "Le Petit Prince", author: "Antoine de Saint-Exupéry", color: "#6366f1" },
+                            { id: "b2", title: "1984", author: "George Orwell", color: "#a855f7" },
+                            { id: "b3", title: "L'Étranger", author: "Albert Camus", color: "#ec4899" },
+                            { id: "b4", title: "Dune", author: "Frank Herbert", color: "#3b82f6" }
+                        ]
+                    }
+                ];
+            }
+        }
+
+        function saveStateToLocalStorage() {
+            localStorage.setItem('roue_livres_data', JSON.stringify({
+                wheels: wheels,
+                adminPassword: adminPassword,
+                activeWheelId: activeWheelId
+            }));
+        }
+
+        function saveStateToFirebase() {
+            saveStateToLocalStorage();
+            if (firebaseDb) {
+                firebaseDb.ref('roue_livres').set({
+                    wheels: wheels,
+                    adminPassword: adminPassword,
+                    updatedAt: Date.now()
+                }).catch(() => {});
+            }
+        }
+
+        function getCurrentWheel() {
+            return wheels.find(w => w.id === activeWheelId) || wheels[0];
+        }
+
+        function drawWheel() {
+            const canvas = document.getElementById('wheelCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const wheel = getCurrentWheel();
+            const books = wheel ? wheel.books : [];
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = width / 2 - 20;
+
+            ctx.clearRect(0, 0, width, height);
+
+            if (books.length === 0) {
+                // Roue vide
                 ctx.beginPath();
-                ctx.arc(radius, radius, radius - 10, 0, 2 * Math.PI);
-                ctx.fillStyle = '#1c2a4a';
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#1e293b';
                 ctx.fill();
-                ctx.strokeStyle = '#f59e0b';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = '#334155';
                 ctx.stroke();
+
                 ctx.fillStyle = '#94a3b8';
-                ctx.font = '14px sans-serif';
+                ctx.font = 'bold 28px Inter';
                 ctx.textAlign = 'center';
-                ctx.fillText('Ajoutez de la magie ici !', radius, radius);
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Aucun livre dans cette roue', centerX, centerY);
                 return;
             }
 
-            const anglePerSegment = (2 * Math.PI) / numSegments;
+            const arcSize = (2 * Math.PI) / books.length;
 
             ctx.save();
-            ctx.translate(radius, radius);
-            ctx.rotate(angle);
-            ctx.translate(-radius, -radius);
+            ctx.translate(centerX, centerY);
+            ctx.rotate(currentRotation);
 
-            items.forEach((item, i) => {
-                const startAngle = i * anglePerSegment;
-                const endAngle = startAngle + anglePerSegment;
+            books.forEach((book, index) => {
+                const angle = index * arcSize;
 
+                // Slice Shape
                 ctx.beginPath();
-                ctx.moveTo(radius, radius);
-                ctx.arc(radius, radius, radius - 4, startAngle, endAngle);
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, angle, angle + arcSize);
                 ctx.closePath();
-                ctx.fillStyle = colors[i % colors.length];
+                ctx.fillStyle = book.color || PALETTE[index % PALETTE.length];
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                ctx.lineWidth = 1.5;
+
+                // Slice Border
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#0f172a';
                 ctx.stroke();
 
+                // Text Rendering
                 ctx.save();
-                ctx.translate(radius, radius);
-                ctx.rotate(startAngle + anglePerSegment / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 13px sans-serif";
-                
-                let text = item.title.length > 15 ? item.title.substring(0, 12) + '...' : item.title;
-                ctx.fillText(text, radius - 25, 4);
+                ctx.rotate(angle + arcSize / 2);
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 24px Inter';
+
+                let displayTitle = book.title;
+                if (displayTitle.length > 22) {
+                    displayTitle = displayTitle.substring(0, 20) + '...';
+                }
+
+                ctx.fillText(displayTitle, radius - 40, 0);
                 ctx.restore();
             });
 
-            ctx.restore();
-            
+            // Center Pin
             ctx.beginPath();
-            ctx.arc(radius, radius, 12, 0, 2 * Math.PI);
-            ctx.fillStyle = '#f59e0b';
+            ctx.arc(0, 0, 50, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0f172a';
             ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#6366f1';
             ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(0, 0, 20, 0, 2 * Math.PI);
+            ctx.fillStyle = '#6366f1';
+            ctx.fill();
+
+            ctx.restore();
         }
 
-        window.spinWheel = function() {
-            const filteredItems = allDataInCloud.filter(item => item.category === activeWheel);
-            if (isSpinning || filteredItems.length === 0) return;
-            
+        function spinWheel() {
+            if (isSpinning) return;
+
+            const wheel = getCurrentWheel();
+            if (!wheel || wheel.books.length === 0) {
+                showToast("Ajoutez des livres pour lancer la roue !", "warning");
+                return;
+            }
+
             isSpinning = true;
-            document.getElementById('result').innerText = "🔮 Incantation en cours...";
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('winnerBanner').classList.add('hidden');
 
-            const numSegments = filteredItems.length;
-            const anglePerSegment = (2 * Math.PI) / numSegments;
+            const books = wheel.books;
+            const arcSize = (2 * Math.PI) / books.length;
+            
+            // Random spin target calculation (between 5 and 8 full turns + random offset)
+            const randomRounds = 5 + Math.random() * 3;
+            const targetRotation = currentRotation + (randomRounds * 2 * Math.PI);
 
-            let velocity = Math.random() * 0.2 + 0.35;
-            const friction = 0.988;
-            let lastSegmentIndex = -1;
+            const startTime = performance.now();
+            const duration = 4500; // ms
 
-            function animate() {
-                velocity *= friction;
-                currentAngle += velocity;
+            function animateSpin(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Cubic Ease-Out
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                currentRotation = currentRotation + (targetRotation - currentRotation) * (easeOut * 0.08);
 
-                const normalizedAngle = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-                const pointerAngle = (3 * Math.PI / 2 - normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
-                const currentSegmentIndex = Math.floor(pointerAngle / anglePerSegment);
+                drawWheel();
 
-                if (currentSegmentIndex !== lastSegmentIndex && velocity > 0.002) {
-                    playClickSound();
-                    lastSegmentIndex = currentSegmentIndex;
-                }
-
-                drawWheelGraph(filteredItems, currentAngle);
-
-                if (velocity > 0.0015) {
-                    requestAnimationFrame(animate);
+                if (progress < 1) {
+                    requestAnimationFrame(animateSpin);
                 } else {
+                    currentRotation = targetRotation % (2 * Math.PI);
+                    drawWheel();
                     isSpinning = false;
-                    playWinSound();
-                    const winningItem = filteredItems[currentSegmentIndex];
-                    document.getElementById('result').innerText = `✨ Le destin a choisi : ${winningItem.title}`;
+                    document.getElementById('spinBtn').disabled = false;
+                    
+                    calculateWinner(books, arcSize);
                 }
             }
 
-            requestAnimationFrame(animate);
+            requestAnimationFrame(animateSpin);
         }
 
-        window.changeWheel = function() {
-            activeWheel = document.getElementById('wheel-selector').value;
-            currentAngle = 0;
-            updateMenuAndContent();
-        }
+        function calculateWinner(books, arcSize) {
+            // Indicator point is at top (-PI/2)
+            let normalizedAngle = (1.5 * Math.PI - (currentRotation % (2 * Math.PI))) % (2 * Math.PI);
+            if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
 
-        window.createNewWheel = async function() {
-            const name = prompt("Donnez un nom magique à cette nouvelle roue :");
-            if (name && name.trim() !== "") {
-                const formattedName = name.trim();
-                activeWheel = formattedName;
-                currentAngle = 0;
-                await addDoc(globalCollection, { title: "Exemple ✨", category: formattedName });
+            const winningIndex = Math.floor(normalizedAngle / arcSize) % books.length;
+            const winner = books[winningIndex];
+
+            // Display Winner
+            const banner = document.getElementById('winnerBanner');
+            document.getElementById('winnerText').innerText = winner.title;
+            document.getElementById('winnerAuthor').innerText = winner.author ? `Par ${winner.author}` : '';
+            banner.classList.remove('hidden');
+
+            // Launch Confetti
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            // Remove on win option
+            const removeToggle = document.getElementById('removeOnWinToggle');
+            if (removeToggle && removeToggle.checked && isAdmin) {
+                setTimeout(() => {
+                    deleteBook(winner.id);
+                    showToast(`"${winner.title}" a été retiré de la roue.`, "info");
+                }, 2000);
             }
         }
 
-        window.addItem = async function() {
-            const input = document.getElementById('item-input');
-            const value = input.value.trim();
-            if (value) {
-                input.value = '';
-                await addDoc(globalCollection, { title: value, category: activeWheel });
+        function renderWheelSelect() {
+            const select = document.getElementById('wheelSelect');
+            select.innerHTML = '';
+
+            wheels.forEach(w => {
+                const opt = document.createElement('option');
+                opt.value = w.id;
+                opt.innerText = `${w.title} (${w.books ? w.books.length : 0})`;
+                if (w.id === activeWheelId) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function changeWheel(id) {
+            activeWheelId = id;
+            document.getElementById('winnerBanner').classList.add('hidden');
+            renderBooksList();
+            drawWheel();
+        }
+
+        function renderBooksList() {
+            const container = document.getElementById('booksList');
+            const countText = document.getElementById('bookCountText');
+            const wheel = getCurrentWheel();
+            const books = wheel ? wheel.books : [];
+
+            countText.innerText = `${books.length} livre${books.length > 1 ? 's' : ''} inscrit${books.length > 1 ? 's' : ''}`;
+            container.innerHTML = '';
+
+            if (books.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-slate-500 py-8 text-center">
+                        <i class="fa-solid fa-book-open text-3xl mb-2 opacity-40"></i>
+                        <p class="text-xs">Aucun livre dans cette roue.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            books.forEach((book) => {
+                const card = document.createElement('div');
+                card.className = "flex items-center justify-between p-3 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition";
+                
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <span class="w-3.5 h-3.5 rounded-full flex-shrink-0" style="background-color: ${book.color || '#6366f1'}"></span>
+                        <div class="truncate">
+                            <h4 class="text-xs font-bold text-slate-100 truncate">${escapeHtml(book.title)}</h4>
+                            ${book.author ? `<p class="text-[11px] text-slate-400 truncate">${escapeHtml(book.author)}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="admin-only ${isAdmin ? '' : 'hidden'} flex items-center space-x-1 pl-2">
+                        <button onclick="openEditBookModal('${book.id}')" class="p-1.5 text-slate-400 hover:text-indigo-400 transition">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="deleteBook('${book.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateAdminUI() {
+            const adminElements = document.querySelectorAll('.admin-only');
+            const authBtnText = document.getElementById('authBtnText');
+
+            if (isAdmin) {
+                adminElements.forEach(el => el.classList.remove('hidden'));
+                authBtnText.innerText = "Admin (Actif)";
+            } else {
+                adminElements.forEach(el => el.classList.add('hidden'));
+                authBtnText.innerText = "Mode Admin";
+            }
+            renderBooksList();
+        }
+
+        function handleCreateWheel(e) {
+            e.preventDefault();
+            const titleInput = document.getElementById('newWheelTitle');
+            const title = titleInput.value.trim();
+
+            if (!title) return;
+
+            const newWheel = {
+                id: 'wheel_' + Date.now(),
+                title: title,
+                books: []
+            };
+
+            wheels.push(newWheel);
+            activeWheelId = newWheel.id;
+
+            saveStateToFirebase();
+            renderWheelSelect();
+            renderBooksList();
+            drawWheel();
+
+            closeNewWheelModal();
+            titleInput.value = '';
+            showToast("Nouvelle roue créée avec succès !", "success");
+        }
+
+        function deleteCurrentWheel() {
+            if (wheels.length <= 1) {
+                showToast("Impossible de supprimer la seule roue restante !", "warning");
+                return;
+            }
+
+            const wheel = getCurrentWheel();
+            wheels = wheels.filter(w => w.id !== activeWheelId);
+            activeWheelId = wheels[0].id;
+
+            saveStateToFirebase();
+            renderWheelSelect();
+            renderBooksList();
+            drawWheel();
+
+            showToast(`La roue "${wheel.title}" a été supprimée.`, "info");
+        }
+
+        function handleQuickAddBook(e) {
+            e.preventDefault();
+            const titleInput = document.getElementById('quickTitle');
+            const authorInput = document.getElementById('quickAuthor');
+
+            const title = titleInput.value.trim();
+            const author = authorInput.value.trim();
+
+            if (!title) return;
+
+            const wheel = getCurrentWheel();
+            const color = PALETTE[wheel.books.length % PALETTE.length];
+
+            wheel.books.push({
+                id: 'b_' + Date.now(),
+                title: title,
+                author: author,
+                color: color
+            });
+
+            saveStateToFirebase();
+            renderBooksList();
+            renderWheelSelect();
+            drawWheel();
+
+            titleInput.value = '';
+            authorInput.value = '';
+            showToast("Livre ajouté à la roue.", "success");
+        }
+
+        function handleSaveBook(e) {
+            e.preventDefault();
+            const id = document.getElementById('editBookId').value;
+            const title = document.getElementById('bookTitle').value.trim();
+            const author = document.getElementById('bookAuthor').value.trim();
+            const color = document.getElementById('bookColor').value;
+
+            const wheel = getCurrentWheel();
+
+            if (id) {
+                const book = wheel.books.find(b => b.id === id);
+                if (book) {
+                    book.title = title;
+                    book.author = author;
+                    book.color = color;
+                }
+            } else {
+                wheel.books.push({
+                    id: 'b_' + Date.now(),
+                    title: title,
+                    author: author,
+                    color: color
+                });
+            }
+
+            saveStateToFirebase();
+            renderBooksList();
+            renderWheelSelect();
+            drawWheel();
+
+            closeBookModal();
+            showToast("Modifications enregistrées.", "success");
+        }
+
+        function deleteBook(bookId) {
+            const wheel = getCurrentWheel();
+            wheel.books = wheel.books.filter(b => b.id !== bookId);
+
+            saveStateToFirebase();
+            renderBooksList();
+            renderWheelSelect();
+            drawWheel();
+        }
+
+        function generatePresetWheel(title, presetBooks) {
+            const newWheel = {
+                id: 'wheel_' + Date.now(),
+                title: title,
+                books: presetBooks.map((b, i) => ({
+                    id: `b_${Date.now()}_${i}`,
+                    title: b.title,
+                    author: b.author,
+                    color: b.color || PALETTE[i % PALETTE.length]
+                }))
+            };
+
+            wheels.push(newWheel);
+            activeWheelId = newWheel.id;
+
+            saveStateToFirebase();
+            renderWheelSelect();
+            renderBooksList();
+            drawWheel();
+
+            closeAIWheelModal();
+            showToast(`Roue "${title}" générée avec succès !`, "success");
+        }
+
+        function toggleAdminLogin() {
+            if (isAdmin) {
+                isAdmin = false;
+                updateAdminUI();
+                showToast("Mode Administrateur désactivé.", "info");
+            } else {
+                document.getElementById('authModal').classList.remove('hidden');
+                document.getElementById('adminPasswordInput').focus();
             }
         }
 
-        window.deleteItem = async function(id) {
-            await deleteDoc(doc(db, "roues_dynamiques", id));
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const input = document.getElementById('adminPasswordInput').value;
+
+            if (input === adminPassword) {
+                isAdmin = true;
+                updateAdminUI();
+                closeAuthModal();
+                document.getElementById('adminPasswordInput').value = '';
+                showToast("Connexion administration réussie !", "success");
+            } else {
+                showToast("Mot de passe incorrect.", "error");
+            }
         }
 
-        // Masquer le guide d'installation si l'application est ouverte directement sur iOS/Android
-        if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
-            const guide = document.getElementById('pwa-guide');
-            if (guide) guide.style.display = 'none';
+        function handleChangePassword(e) {
+            e.preventDefault();
+            const newPass = document.getElementById('newAdminPasswordInput').value.trim();
+
+            if (newPass) {
+                adminPassword = newPass;
+                saveStateToFirebase();
+                closeChangePasswordModal();
+                showToast("Mot de passe admin mis à jour.", "success");
+            }
+        }
+
+        // Modal Openers & Closers
+        function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+        function openNewWheelModal() { document.getElementById('newWheelModal').classList.remove('hidden'); }
+        function closeNewWheelModal() { document.getElementById('newWheelModal').classList.add('hidden'); }
+        function openAIWheelModal() { document.getElementById('aiWheelModal').classList.remove('hidden'); }
+        function closeAIWheelModal() { document.getElementById('aiWheelModal').classList.add('hidden'); }
+        function openChangePasswordModal() { document.getElementById('changePasswordModal').classList.remove('hidden'); }
+        function closeChangePasswordModal() { document.getElementById('changePasswordModal').classList.add('hidden'); }
+        
+        function openAddBookModal() {
+            document.getElementById('bookModalTitle').innerText = "Ajouter un livre";
+            document.getElementById('editBookId').value = "";
+            document.getElementById('bookTitle').value = "";
+            document.getElementById('bookAuthor').value = "";
+            document.getElementById('bookColor').value = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+            document.getElementById('bookModal').classList.remove('hidden');
+        }
+
+        function openEditBookModal(bookId) {
+            const wheel = getCurrentWheel();
+            const book = wheel.books.find(b => b.id === bookId);
+            if (!book) return;
+
+            document.getElementById('bookModalTitle').innerText = "Éditer le livre";
+            document.getElementById('editBookId').value = book.id;
+            document.getElementById('bookTitle').value = book.title;
+            document.getElementById('bookAuthor').value = book.author || "";
+            document.getElementById('bookColor').value = book.color || "#6366f1";
+            document.getElementById('bookModal').classList.remove('hidden');
+        }
+
+        function closeBookModal() { document.getElementById('bookModal').classList.add('hidden'); }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let bg = "bg-slate-900 border-slate-700 text-slate-100";
+            let icon = "fa-info-circle text-indigo-400";
+
+            if (type === 'success') {
+                bg = "bg-slate-900 border-emerald-500/30 text-emerald-300";
+                icon = "fa-check-circle text-emerald-400";
+            } else if (type === 'warning') {
+                bg = "bg-slate-900 border-amber-500/30 text-amber-300";
+                icon = "fa-exclamation-triangle text-amber-400";
+            } else if (type === 'error') {
+                bg = "bg-slate-900 border-rose-500/30 text-rose-300";
+                icon = "fa-times-circle text-rose-400";
+            }
+
+            toast.className = `pointer-events-auto flex items-center space-x-3 px-4 py-3 rounded-2xl border shadow-2xl text-xs font-semibold ${bg} transition transform duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-sm"></i> <span>${escapeHtml(message)}</span>`;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
 </body>
