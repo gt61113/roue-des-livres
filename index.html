@@ -91,8 +91,13 @@
 
         .category-actions {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             width: 100%;
+        }
+
+        .category-actions button {
+            padding: 8px 6px;
+            font-size: 12px;
         }
 
         select {
@@ -346,6 +351,7 @@
         <select id="wheel-selector" onchange="changeWheel()"></select>
         <div class="category-actions admin-only">
             <button class="btn-secondary" onclick="createNewWheel()">+ Créer</button>
+            <button class="btn-secondary" onclick="changeAdminPassword()">🔑 Mot de passe</button>
             <button class="btn-danger" onclick="deleteCurrentWheel()">🗑️ Supprimer</button>
         </div>
     </div>
@@ -401,7 +407,11 @@
             measurementId: "G-57NHH10WMT"
         };
 
-        const ADMIN_PASSWORD = "1234";
+        // Gestion dynamique du mot de passe avec sauvegarde locale (Défaut: 1234)
+        function getStoredPassword() {
+            return localStorage.getItem('adminPassword') || "1234";
+        }
+
         let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
 
         function updateAdminUI() {
@@ -423,7 +433,7 @@
                 updateMenuAndContent();
             } else {
                 const pwd = prompt("🔑 Entrez le mot de passe Admin :");
-                if (pwd === ADMIN_PASSWORD) {
+                if (pwd === getStoredPassword()) {
                     isAdmin = true;
                     sessionStorage.setItem('isAdmin', 'true');
                     updateAdminUI();
@@ -431,6 +441,22 @@
                 } else if (pwd !== null) {
                     alert("Mot de passe incorrect ❌");
                 }
+            }
+        }
+
+        window.changeAdminPassword = function() {
+            if (!isAdmin) return;
+            const currentPwd = prompt("🔑 Entrez le mot de passe actuel :");
+            if (currentPwd === getStoredPassword()) {
+                const newPwd = prompt("✨ Entrez le NOUVEAU mot de passe :");
+                if (newPwd && newPwd.trim() !== "") {
+                    localStorage.setItem('adminPassword', newPwd.trim());
+                    alert("Mot de passe modifié avec succès ! ✅");
+                } else if (newPwd !== null) {
+                    alert("Le mot de passe ne peut pas être vide ❌");
+                }
+            } else if (currentPwd !== null) {
+                alert("Mot de passe actuel incorrect ❌");
             }
         }
 
